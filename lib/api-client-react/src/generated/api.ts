@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  HealthStatus,
+  ScanRequest,
+  ScanResult,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,90 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Runs axe-core accessibility scan on a given URL using Playwright
+ * @summary Run accessibility scan
+ */
+export const getRunAccessibilityScanUrl = () => {
+  return `/api/a11y/scan`;
+};
+
+export const runAccessibilityScan = async (
+  scanRequest: ScanRequest,
+  options?: RequestInit,
+): Promise<ScanResult> => {
+  return customFetch<ScanResult>(getRunAccessibilityScanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(scanRequest),
+  });
+};
+
+export const getRunAccessibilityScanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAccessibilityScan>>,
+    TError,
+    { data: BodyType<ScanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runAccessibilityScan>>,
+  TError,
+  { data: BodyType<ScanRequest> },
+  TContext
+> => {
+  const mutationKey = ["runAccessibilityScan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runAccessibilityScan>>,
+    { data: BodyType<ScanRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return runAccessibilityScan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunAccessibilityScanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runAccessibilityScan>>
+>;
+export type RunAccessibilityScanMutationBody = BodyType<ScanRequest>;
+export type RunAccessibilityScanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Run accessibility scan
+ */
+export const useRunAccessibilityScan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAccessibilityScan>>,
+    TError,
+    { data: BodyType<ScanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runAccessibilityScan>>,
+  TError,
+  { data: BodyType<ScanRequest> },
+  TContext
+> => {
+  return useMutation(getRunAccessibilityScanMutationOptions(options));
+};

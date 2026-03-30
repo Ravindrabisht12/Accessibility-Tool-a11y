@@ -48,6 +48,18 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## Artifacts
+
+### `artifacts/a11y-tester` (`@workspace/a11y-tester`)
+
+React + Vite frontend for the Accessibility Testing Tool. Allows users to enter a URL, select WCAG level, and run automated accessibility scans via the API.
+
+- Uses React Hook Form + Zod for form validation
+- Displays results with violations grouped by severity (critical/serious/moderate/minor)
+- Tabs for Violations, Passes, and Incomplete results
+- Filter by impact level
+- Framer Motion animations for loading states and expandable cards
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)

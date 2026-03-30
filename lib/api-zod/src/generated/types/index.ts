@@ -6,4 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./a11yNode";
+export * from "./a11yRule";
+export * from "./a11yViolation";
+export * from "./errorResponse";
 export * from "./healthStatus";
+export * from "./scanRequest";
+export * from "./scanRequestWcagLevel";
+export * from "./scanResult";
+export * from "./scanSummary";

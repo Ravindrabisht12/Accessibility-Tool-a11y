@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: accessibility
+    description: Accessibility testing operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /a11y/scan:
+    post:
+      operationId: runAccessibilityScan
+      tags: [accessibility]
+      summary: Run accessibility scan
+      description: Runs axe-core accessibility scan on a given URL using Playwright
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanRequest"
+      responses:
+        "200":
+          description: Scan results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResult"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Scan failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +65,161 @@ components:
           type: string
       required:
         - status
-
+    ScanRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL to scan for accessibility issues
+        wcagLevel:
+          type: string
+          enum: [A, AA, AAA]
+          default: AA
+          description: WCAG conformance level to test against
+        includeWcag22:
+          type: boolean
+          default: true
+          description: Include WCAG 2.2 rules
+        includeAaa:
+          type: boolean
+          default: false
+          description: Include AAA-level rules
+      required:
+        - url
+    ScanResult:
+      type: object
+      properties:
+        url:
+          type: string
+        scanDuration:
+          type: number
+          description: Scan duration in milliseconds
+        timestamp:
+          type: string
+        violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/A11yViolation"
+        passes:
+          type: array
+          items:
+            $ref: "#/components/schemas/A11yRule"
+        incomplete:
+          type: array
+          items:
+            $ref: "#/components/schemas/A11yRule"
+        inapplicable:
+          type: array
+          items:
+            $ref: "#/components/schemas/A11yRule"
+        summary:
+          $ref: "#/components/schemas/ScanSummary"
+      required:
+        - url
+        - scanDuration
+        - timestamp
+        - violations
+        - passes
+        - incomplete
+        - inapplicable
+        - summary
+    ScanSummary:
+      type: object
+      properties:
+        violationCount:
+          type: integer
+        passCount:
+          type: integer
+        incompleteCount:
+          type: integer
+        criticalCount:
+          type: integer
+        seriousCount:
+          type: integer
+        moderateCount:
+          type: integer
+        minorCount:
+          type: integer
+      required:
+        - violationCount
+        - passCount
+        - incompleteCount
+        - criticalCount
+        - seriousCount
+        - moderateCount
+        - minorCount
+    A11yViolation:
+      type: object
+      properties:
+        id:
+          type: string
+        impact:
+          type: string
+          nullable: true
+        description:
+          type: string
+        help:
+          type: string
+        helpUrl:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/A11yNode"
+      required:
+        - id
+        - description
+        - help
+        - helpUrl
+        - tags
+        - nodes
+    A11yRule:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        help:
+          type: string
+        helpUrl:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - description
+        - help
+        - helpUrl
+        - tags
+    A11yNode:
+      type: object
+      properties:
+        html:
+          type: string
+        target:
+          type: array
+          items:
+            type: string
+        failureSummary:
+          type: string
+          nullable: true
+      required:
+        - html
+        - target
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message

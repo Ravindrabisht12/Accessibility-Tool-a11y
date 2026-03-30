@@ -14,3 +14,86 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Runs axe-core accessibility scan on a given URL using Playwright
+ * @summary Run accessibility scan
+ */
+export const runAccessibilityScanBodyWcagLevelDefault = `AA`;
+export const runAccessibilityScanBodyIncludeWcag22Default = true;
+export const runAccessibilityScanBodyIncludeAaaDefault = false;
+
+export const RunAccessibilityScanBody = zod.object({
+  url: zod.string().describe("URL to scan for accessibility issues"),
+  wcagLevel: zod
+    .enum(["A", "AA", "AAA"])
+    .default(runAccessibilityScanBodyWcagLevelDefault)
+    .describe("WCAG conformance level to test against"),
+  includeWcag22: zod
+    .boolean()
+    .default(runAccessibilityScanBodyIncludeWcag22Default)
+    .describe("Include WCAG 2.2 rules"),
+  includeAaa: zod
+    .boolean()
+    .default(runAccessibilityScanBodyIncludeAaaDefault)
+    .describe("Include AAA-level rules"),
+});
+
+export const RunAccessibilityScanResponse = zod.object({
+  url: zod.string(),
+  scanDuration: zod.number().describe("Scan duration in milliseconds"),
+  timestamp: zod.string(),
+  violations: zod.array(
+    zod.object({
+      id: zod.string(),
+      impact: zod.string().nullish(),
+      description: zod.string(),
+      help: zod.string(),
+      helpUrl: zod.string(),
+      tags: zod.array(zod.string()),
+      nodes: zod.array(
+        zod.object({
+          html: zod.string(),
+          target: zod.array(zod.string()),
+          failureSummary: zod.string().nullish(),
+        }),
+      ),
+    }),
+  ),
+  passes: zod.array(
+    zod.object({
+      id: zod.string(),
+      description: zod.string(),
+      help: zod.string(),
+      helpUrl: zod.string(),
+      tags: zod.array(zod.string()),
+    }),
+  ),
+  incomplete: zod.array(
+    zod.object({
+      id: zod.string(),
+      description: zod.string(),
+      help: zod.string(),
+      helpUrl: zod.string(),
+      tags: zod.array(zod.string()),
+    }),
+  ),
+  inapplicable: zod.array(
+    zod.object({
+      id: zod.string(),
+      description: zod.string(),
+      help: zod.string(),
+      helpUrl: zod.string(),
+      tags: zod.array(zod.string()),
+    }),
+  ),
+  summary: zod.object({
+    violationCount: zod.number(),
+    passCount: zod.number(),
+    incompleteCount: zod.number(),
+    criticalCount: zod.number(),
+    seriousCount: zod.number(),
+    moderateCount: zod.number(),
+    minorCount: zod.number(),
+  }),
+});
