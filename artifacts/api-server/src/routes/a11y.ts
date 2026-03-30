@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { chromium } from "@playwright/test";
+import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { RunAccessibilityScanBody } from "@workspace/api-zod";
 
