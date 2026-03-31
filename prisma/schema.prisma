@@ -1,0 +1,82 @@
+// MongoDB collections via Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  url       String   @unique
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pages Pages[]
+  scans Scan[]
+}
+
+model Pages {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  siteId String @db.ObjectId
+  path   String
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, path])
+}
+
+model Scan {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  siteId       String?    @db.ObjectId
+  pagePath     String     @default("/")
+  fullUrl      String
+  status       ScanStatus @default(QUEUED)
+  scanType     ScanType   @default(MANUAL)
+  wcagLevel    String     @default("AA")
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  durationMs   Int?
+  totalViolations Int     @default(0)
+  criticalCount   Int     @default(0)
+  seriousCount    Int     @default(0)
+  moderateCount   Int     @default(0)
+  minorCount      Int     @default(0)
+  errorMessage    String?
+
+  site       Site?       @relation(fields: [siteId], references: [id])
+  violations Violation[]
+}
+
+model Violation {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  scanId      String @db.ObjectId
+  ruleId      String
+  impact      String
+  description String
+  help        String
+  helpUrl     String
+  nodes       Json
+
+  scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([scanId])
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ScanType {
+  MANUAL
+  SCHEDULED
+  SITE
+}
